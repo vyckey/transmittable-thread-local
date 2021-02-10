@@ -1,29 +1,34 @@
-/*******************************************************************************
- * Copyright (c) 2013,2014 Rüdiger Herrmann
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+/*
+ * Copyright 2013 The TransmittableThreadLocal(TTL) Project
  *
- * Contributors:
- *   Rüdiger Herrmann - initial API and implementation
- *   Matt Morrissette - allow to use non-static inner IgnoreConditions
- ******************************************************************************/
+ * The TTL Project licenses this file to you under the Apache License,
+ * version 2.0 (the "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
 package com.alibaba.support.junit.conditional;
-
-import org.junit.Assume;
-import org.junit.rules.MethodRule;
-import org.junit.runners.model.FrameworkMethod;
-import org.junit.runners.model.Statement;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Modifier;
+import org.junit.Assume;
+import org.junit.rules.MethodRule;
+import org.junit.runners.model.FrameworkMethod;
+import org.junit.runners.model.Statement;
 
 /**
- * @see <a href="https://www.codeaffine.com/2013/11/18/a-junit-rule-to-conditionally-ignore-tests/">A JUnit Rule to Conditionally Ignore Tests</a>
+ * @see <a
+ *     href="https://www.codeaffine.com/2013/11/18/a-junit-rule-to-conditionally-ignore-tests/">A
+ *     JUnit Rule to Conditionally Ignore Tests</a>
  * @see <a href="https://gist.github.com/rherrmann/7447571">ConditionalIgnoreRule - gist</a>
  */
 public class ConditionalIgnoreRule implements MethodRule {
@@ -84,25 +89,27 @@ public class ConditionalIgnoreRule implements MethodRule {
             if (isConditionTypeStandalone()) {
                 result = conditionType.newInstance();
             } else {
-                result = conditionType.getDeclaredConstructor(target.getClass()).newInstance(target);
+                result =
+                        conditionType.getDeclaredConstructor(target.getClass()).newInstance(target);
             }
             return result;
         }
 
         private void checkConditionType() {
             if (!isConditionTypeStandalone() && !isConditionTypeDeclaredInTarget()) {
-                String msg
-                        = "Conditional class '%s' is a member class "
-                        + "but was not declared inside the test case using it.\n"
-                        + "Either make this class a static class, "
-                        + "standalone class (by declaring it in it's own file) "
-                        + "or move it inside the test case using it";
+                String msg =
+                        "Conditional class '%s' is a member class "
+                                + "but was not declared inside the test case using it.\n"
+                                + "Either make this class a static class, "
+                                + "standalone class (by declaring it in it's own file) "
+                                + "or move it inside the test case using it";
                 throw new IllegalArgumentException(String.format(msg, conditionType.getName()));
             }
         }
 
         private boolean isConditionTypeStandalone() {
-            return !conditionType.isMemberClass() || Modifier.isStatic(conditionType.getModifiers());
+            return !conditionType.isMemberClass()
+                    || Modifier.isStatic(conditionType.getModifiers());
         }
 
         private boolean isConditionTypeDeclaredInTarget() {

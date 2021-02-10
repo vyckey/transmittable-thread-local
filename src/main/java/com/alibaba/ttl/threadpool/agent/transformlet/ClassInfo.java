@@ -1,22 +1,36 @@
+/*
+ * Copyright 2013 The TransmittableThreadLocal(TTL) Project
+ *
+ * The TTL Project licenses this file to you under the Apache License,
+ * version 2.0 (the "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
 package com.alibaba.ttl.threadpool.agent.transformlet;
+
+import static com.alibaba.ttl.threadpool.agent.transformlet.helper.TtlTransformletHelper.getLocationUrlOfClass;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.net.URL;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.LoaderClassPath;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.net.URL;
-
-import static com.alibaba.ttl.threadpool.agent.transformlet.helper.TtlTransformletHelper.getLocationUrlOfClass;
-
 /**
  * Class Info for {@link TtlTransformlet}.
  *
- * <B><I>Caution:</I></B><br>
+ * <p><B><I>Caution:</I></B><br>
  * Do <b>NOT</b> load {@link Class} which is transforming, or the transform will lose effectiveness.
  *
  * @author Jerry Lee (oldratlee at gmail dot com)
@@ -29,12 +43,14 @@ public class ClassInfo {
     private final ClassLoader loader;
 
     // SuppressFBWarnings for classFileBuffer/loader parameter:
-    //   [ERROR] new com.alibaba.ttl.threadpool.agent.transformlet.ClassInfo(String, byte[], ClassLoader)
+    //   [ERROR] new com.alibaba.ttl.threadpool.agent.transformlet.ClassInfo(String, byte[],
+    // ClassLoader)
     //   may expose internal representation by storing an externally mutable object
     //   into ClassInfo.classFileBuffer/loader
-    public ClassInfo(@NonNull String transformerClassFile,
-                     @NonNull @SuppressFBWarnings({"EI_EXPOSE_REP2"}) byte[] classFileBuffer,
-                     @Nullable @SuppressFBWarnings({"EI_EXPOSE_REP2"}) ClassLoader loader) {
+    public ClassInfo(
+            @NonNull String transformerClassFile,
+            @NonNull @SuppressFBWarnings({"EI_EXPOSE_REP2"}) byte[] classFileBuffer,
+            @Nullable @SuppressFBWarnings({"EI_EXPOSE_REP2"}) ClassLoader loader) {
         this.transformerClassFile = transformerClassFile;
         this.className = toClassName(transformerClassFile);
         this.classFileBuffer = classFileBuffer;

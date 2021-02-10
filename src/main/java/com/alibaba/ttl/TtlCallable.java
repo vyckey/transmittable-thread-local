@@ -1,4 +1,21 @@
+/*
+ * Copyright 2013 The TransmittableThreadLocal(TTL) Project
+ *
+ * The TTL Project licenses this file to you under the Apache License,
+ * version 2.0 (the "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
 package com.alibaba.ttl;
+
+import static com.alibaba.ttl.TransmittableThreadLocal.Transmitter.*;
 
 import com.alibaba.ttl.spi.TtlAttachments;
 import com.alibaba.ttl.spi.TtlAttachmentsDelegate;
@@ -6,7 +23,6 @@ import com.alibaba.ttl.spi.TtlEnhanced;
 import com.alibaba.ttl.spi.TtlWrapper;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -14,15 +30,14 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.alibaba.ttl.TransmittableThreadLocal.Transmitter.*;
-
 /**
- * {@link TtlCallable} decorate {@link Callable}, so as to get {@link TransmittableThreadLocal}
- * and transmit it to the time of {@link Callable} execution, needed when use {@link Callable} to thread pool.
- * <p>
- * Use factory method {@link #get(Callable)} to get decorated instance.
- * <p>
- * Other TTL Wrapper for common {@code Functional Interface} see {@link TtlWrappers}.
+ * {@link TtlCallable} decorate {@link Callable}, so as to get {@link TransmittableThreadLocal} and
+ * transmit it to the time of {@link Callable} execution, needed when use {@link Callable} to thread
+ * pool.
+ *
+ * <p>Use factory method {@link #get(Callable)} to get decorated instance.
+ *
+ * <p>Other TTL Wrapper for common {@code Functional Interface} see {@link TtlWrappers}.
  *
  * @author Jerry Lee (oldratlee at gmail dot com)
  * @see com.alibaba.ttl.threadpool.TtlExecutors
@@ -36,7 +51,8 @@ import static com.alibaba.ttl.TransmittableThreadLocal.Transmitter.*;
  * @see java.util.concurrent.ExecutorCompletionService
  * @since 0.9.0
  */
-public final class TtlCallable<V> implements Callable<V>, TtlWrapper<Callable<V>>, TtlEnhanced, TtlAttachments {
+public final class TtlCallable<V>
+        implements Callable<V>, TtlWrapper<Callable<V>>, TtlEnhanced, TtlAttachments {
     private final AtomicReference<Object> capturedRef;
     private final Callable<V> callable;
     private final boolean releaseTtlValueReferenceAfterCall;
@@ -47,13 +63,13 @@ public final class TtlCallable<V> implements Callable<V>, TtlWrapper<Callable<V>
         this.releaseTtlValueReferenceAfterCall = releaseTtlValueReferenceAfterCall;
     }
 
-    /**
-     * wrap method {@link Callable#call()}.
-     */
+    /** wrap method {@link Callable#call()}. */
     @Override
     public V call() throws Exception {
         final Object captured = capturedRef.get();
-        if (captured == null || releaseTtlValueReferenceAfterCall && !capturedRef.compareAndSet(captured, null)) {
+        if (captured == null
+                || releaseTtlValueReferenceAfterCall
+                        && !capturedRef.compareAndSet(captured, null)) {
             throw new IllegalStateException("TTL value reference is released after call!");
         }
 
@@ -65,9 +81,7 @@ public final class TtlCallable<V> implements Callable<V>, TtlWrapper<Callable<V>
         }
     }
 
-    /**
-     * return the original/underneath {@link Callable}.
-     */
+    /** return the original/underneath {@link Callable}. */
     @NonNull
     public Callable<V> getCallable() {
         return unwrap();
@@ -107,8 +121,8 @@ public final class TtlCallable<V> implements Callable<V>, TtlWrapper<Callable<V>
 
     /**
      * Factory method, wrap input {@link Callable} to {@link TtlCallable}.
-     * <p>
-     * This method is idempotent.
+     *
+     * <p>This method is idempotent.
      *
      * @param callable input {@link Callable}
      * @return Wrapped {@link Callable}
@@ -118,33 +132,39 @@ public final class TtlCallable<V> implements Callable<V>, TtlWrapper<Callable<V>
         return get(callable, false, false);
     }
 
-
     /**
      * Factory method, wrap input {@link Callable} to {@link TtlCallable}.
-     * <p>
-     * This method is idempotent.
      *
-     * @param callable                          input {@link Callable}
-     * @param releaseTtlValueReferenceAfterCall release TTL value reference after run, avoid memory leak even if {@link TtlRunnable} is referred.
+     * <p>This method is idempotent.
+     *
+     * @param callable input {@link Callable}
+     * @param releaseTtlValueReferenceAfterCall release TTL value reference after run, avoid memory
+     *     leak even if {@link TtlRunnable} is referred.
      * @return Wrapped {@link Callable}
      */
     @Nullable
-    public static <T> TtlCallable<T> get(@Nullable Callable<T> callable, boolean releaseTtlValueReferenceAfterCall) {
+    public static <T> TtlCallable<T> get(
+            @Nullable Callable<T> callable, boolean releaseTtlValueReferenceAfterCall) {
         return get(callable, releaseTtlValueReferenceAfterCall, false);
     }
 
     /**
      * Factory method, wrap input {@link Callable} to {@link TtlCallable}.
-     * <p>
-     * This method is idempotent.
      *
-     * @param callable                          input {@link Callable}
-     * @param releaseTtlValueReferenceAfterCall release TTL value reference after run, avoid memory leak even if {@link TtlRunnable} is referred.
-     * @param idempotent                        is idempotent or not. {@code true} will cover up bugs! <b>DO NOT</b> set, only when you know why.
+     * <p>This method is idempotent.
+     *
+     * @param callable input {@link Callable}
+     * @param releaseTtlValueReferenceAfterCall release TTL value reference after run, avoid memory
+     *     leak even if {@link TtlRunnable} is referred.
+     * @param idempotent is idempotent or not. {@code true} will cover up bugs! <b>DO NOT</b> set,
+     *     only when you know why.
      * @return Wrapped {@link Callable}
      */
     @Nullable
-    public static <T> TtlCallable<T> get(@Nullable Callable<T> callable, boolean releaseTtlValueReferenceAfterCall, boolean idempotent) {
+    public static <T> TtlCallable<T> get(
+            @Nullable Callable<T> callable,
+            boolean releaseTtlValueReferenceAfterCall,
+            boolean idempotent) {
         if (null == callable) return null;
 
         if (callable instanceof TtlEnhanced) {
@@ -169,25 +189,33 @@ public final class TtlCallable<V> implements Callable<V>, TtlWrapper<Callable<V>
     /**
      * wrap input {@link Callable} Collection to {@link TtlCallable} Collection.
      *
-     * @param tasks                             task to be wrapped
-     * @param releaseTtlValueReferenceAfterCall release TTL value reference after run, avoid memory leak even if {@link TtlRunnable} is referred.
+     * @param tasks task to be wrapped
+     * @param releaseTtlValueReferenceAfterCall release TTL value reference after run, avoid memory
+     *     leak even if {@link TtlRunnable} is referred.
      * @return Wrapped {@link Callable}
      */
     @NonNull
-    public static <T> List<TtlCallable<T>> gets(@Nullable Collection<? extends Callable<T>> tasks, boolean releaseTtlValueReferenceAfterCall) {
+    public static <T> List<TtlCallable<T>> gets(
+            @Nullable Collection<? extends Callable<T>> tasks,
+            boolean releaseTtlValueReferenceAfterCall) {
         return gets(tasks, releaseTtlValueReferenceAfterCall, false);
     }
 
     /**
      * wrap input {@link Callable} Collection to {@link TtlCallable} Collection.
      *
-     * @param tasks                             task to be wrapped
-     * @param releaseTtlValueReferenceAfterCall release TTL value reference after run, avoid memory leak even if {@link TtlRunnable} is referred.
-     * @param idempotent                        is idempotent or not. {@code true} will cover up bugs! <b>DO NOT</b> set, only when you know why.
+     * @param tasks task to be wrapped
+     * @param releaseTtlValueReferenceAfterCall release TTL value reference after run, avoid memory
+     *     leak even if {@link TtlRunnable} is referred.
+     * @param idempotent is idempotent or not. {@code true} will cover up bugs! <b>DO NOT</b> set,
+     *     only when you know why.
      * @return Wrapped {@link Callable}
      */
     @NonNull
-    public static <T> List<TtlCallable<T>> gets(@Nullable Collection<? extends Callable<T>> tasks, boolean releaseTtlValueReferenceAfterCall, boolean idempotent) {
+    public static <T> List<TtlCallable<T>> gets(
+            @Nullable Collection<? extends Callable<T>> tasks,
+            boolean releaseTtlValueReferenceAfterCall,
+            boolean idempotent) {
         if (null == tasks) return Collections.emptyList();
 
         List<TtlCallable<T>> copy = new ArrayList<TtlCallable<T>>();
@@ -199,11 +227,13 @@ public final class TtlCallable<V> implements Callable<V>, TtlWrapper<Callable<V>
 
     /**
      * Unwrap {@link TtlCallable} to the original/underneath one.
-     * <p>
-     * this method is {@code null}-safe, when input {@code Callable} parameter is {@code null}, return {@code null};
-     * if input {@code Callable} parameter is not a {@link TtlCallable} just return input {@code Callable}.
-     * <p>
-     * so {@code TtlCallable.unwrap(TtlCallable.get(callable))} will always return the same input {@code callable} object.
+     *
+     * <p>this method is {@code null}-safe, when input {@code Callable} parameter is {@code null},
+     * return {@code null}; if input {@code Callable} parameter is not a {@link TtlCallable} just
+     * return input {@code Callable}.
+     *
+     * <p>so {@code TtlCallable.unwrap(TtlCallable.get(callable))} will always return the same input
+     * {@code callable} object.
      *
      * @see #get(Callable)
      * @see com.alibaba.ttl.TtlUnwrap#unwrap(Object)
@@ -217,10 +247,11 @@ public final class TtlCallable<V> implements Callable<V>, TtlWrapper<Callable<V>
 
     /**
      * Unwrap {@link TtlCallable} to the original/underneath one.
-     * <p>
-     * Invoke {@link #unwrap(Callable)} for each element in input collection.
-     * <p>
-     * This method is {@code null}-safe, when input {@code Callable} collection parameter is {@code null}, return a empty list.
+     *
+     * <p>Invoke {@link #unwrap(Callable)} for each element in input collection.
+     *
+     * <p>This method is {@code null}-safe, when input {@code Callable} collection parameter is
+     * {@code null}, return a empty list.
      *
      * @see #gets(Collection)
      * @see #unwrap(Callable)

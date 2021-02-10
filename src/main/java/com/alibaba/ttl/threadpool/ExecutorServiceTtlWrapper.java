@@ -1,3 +1,18 @@
+/*
+ * Copyright 2013 The TransmittableThreadLocal(TTL) Project
+ *
+ * The TTL Project licenses this file to you under the Apache License,
+ * version 2.0 (the "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
 package com.alibaba.ttl.threadpool;
 
 import com.alibaba.ttl.TransmittableThreadLocal;
@@ -6,15 +21,14 @@ import com.alibaba.ttl.TtlRunnable;
 import com.alibaba.ttl.spi.TtlEnhanced;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.*;
 
 /**
- * {@link TransmittableThreadLocal} Wrapper of {@link ExecutorService},
- * transmit the {@link TransmittableThreadLocal} from the task submit time of {@link Runnable} or {@link Callable}
- * to the execution time of {@link Runnable} or {@link Callable}.
+ * {@link TransmittableThreadLocal} Wrapper of {@link ExecutorService}, transmit the {@link
+ * TransmittableThreadLocal} from the task submit time of {@link Runnable} or {@link Callable} to
+ * the execution time of {@link Runnable} or {@link Callable}.
  *
  * @author Jerry Lee (oldratlee at gmail dot com)
  * @since 0.9.0
@@ -50,7 +64,8 @@ class ExecutorServiceTtlWrapper extends ExecutorTtlWrapper implements ExecutorSe
     }
 
     @Override
-    public boolean awaitTermination(long timeout, @NonNull TimeUnit unit) throws InterruptedException {
+    public boolean awaitTermination(long timeout, @NonNull TimeUnit unit)
+            throws InterruptedException {
         return executorService.awaitTermination(timeout, unit);
     }
 
@@ -74,24 +89,30 @@ class ExecutorServiceTtlWrapper extends ExecutorTtlWrapper implements ExecutorSe
 
     @NonNull
     @Override
-    public <T> List<Future<T>> invokeAll(@NonNull Collection<? extends Callable<T>> tasks) throws InterruptedException {
+    public <T> List<Future<T>> invokeAll(@NonNull Collection<? extends Callable<T>> tasks)
+            throws InterruptedException {
         return executorService.invokeAll(TtlCallable.gets(tasks, false, idempotent));
     }
 
     @NonNull
     @Override
-    public <T> List<Future<T>> invokeAll(@NonNull Collection<? extends Callable<T>> tasks, long timeout, @NonNull TimeUnit unit) throws InterruptedException {
+    public <T> List<Future<T>> invokeAll(
+            @NonNull Collection<? extends Callable<T>> tasks, long timeout, @NonNull TimeUnit unit)
+            throws InterruptedException {
         return executorService.invokeAll(TtlCallable.gets(tasks, false, idempotent), timeout, unit);
     }
 
     @NonNull
     @Override
-    public <T> T invokeAny(@NonNull Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException {
+    public <T> T invokeAny(@NonNull Collection<? extends Callable<T>> tasks)
+            throws InterruptedException, ExecutionException {
         return executorService.invokeAny(TtlCallable.gets(tasks, false, idempotent));
     }
 
     @Override
-    public <T> T invokeAny(@NonNull Collection<? extends Callable<T>> tasks, long timeout, @NonNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    public <T> T invokeAny(
+            @NonNull Collection<? extends Callable<T>> tasks, long timeout, @NonNull TimeUnit unit)
+            throws InterruptedException, ExecutionException, TimeoutException {
         return executorService.invokeAny(TtlCallable.gets(tasks, false, idempotent), timeout, unit);
     }
 

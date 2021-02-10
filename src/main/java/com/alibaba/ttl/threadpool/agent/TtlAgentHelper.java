@@ -1,8 +1,22 @@
+/*
+ * Copyright 2013 The TransmittableThreadLocal(TTL) Project
+ *
+ * The TTL Project licenses this file to you under the Apache License,
+ * version 2.0 (the "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
 package com.alibaba.ttl.threadpool.agent;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-
 import java.util.*;
 
 /**
@@ -14,16 +28,17 @@ final class TtlAgentHelper {
     // ======== Option Getter Methods ========
 
     static boolean isBooleanOptionSet(
-        @Nullable final Map<String, String> kvs, @NonNull String key,
-        boolean defaultValueIfKeyAbsent
-    ) {
+            @Nullable final Map<String, String> kvs,
+            @NonNull String key,
+            boolean defaultValueIfKeyAbsent) {
         return isBooleanOptionSet(kvs, key, defaultValueIfKeyAbsent, true);
     }
 
     static boolean isBooleanOptionSet(
-        @Nullable final Map<String, String> kvs, @NonNull String key,
-        boolean defaultValueIfKeyAbsent, boolean defaultValueIfValueAbsent
-    ) {
+            @Nullable final Map<String, String> kvs,
+            @NonNull String key,
+            boolean defaultValueIfKeyAbsent,
+            boolean defaultValueIfValueAbsent) {
         final String value;
 
         final Properties properties = System.getProperties();
@@ -46,9 +61,9 @@ final class TtlAgentHelper {
 
     @NonNull
     static String getStringOptionValue(
-        @Nullable final Map<String, String> kvs, @NonNull String key,
-        @NonNull String defaultValue
-    ) {
+            @Nullable final Map<String, String> kvs,
+            @NonNull String key,
+            @NonNull String defaultValue) {
         final String value;
 
         final Properties properties = System.getProperties();
@@ -71,7 +86,8 @@ final class TtlAgentHelper {
 
     @NonNull
     @SuppressWarnings("unchecked")
-    static List<String> getOptionStringListValues(@Nullable final Map<String, String> kvs, @NonNull String key) {
+    static List<String> getOptionStringListValues(
+            @Nullable final Map<String, String> kvs, @NonNull String key) {
         final String value;
 
         final Properties properties = System.getProperties();
@@ -89,7 +105,8 @@ final class TtlAgentHelper {
     // ======== Simple Parse Util Methods ========
 
     /**
-     * Split {@code json} like String({@code "k1:v1,k2:v2"}) to KV map({@code "k1"->"v1", "k2"->"v2"}).
+     * Split {@code json} like String({@code "k1:v1,k2:v2"}) to KV map({@code "k1"->"v1",
+     * "k2"->"v2"}).
      */
     @NonNull
     static Map<String, String> splitCommaColonStringToKV(@Nullable final String commaColonString) {
@@ -108,9 +125,7 @@ final class TtlAgentHelper {
         return ret;
     }
 
-    /**
-     * Split String {@code "v1|v2|v3"} to String List({@code [v1, v2, v3]}).
-     */
+    /** Split String {@code "v1|v2|v3"} to String List({@code [v1, v2, v3]}). */
     @NonNull
     static List<String> splitListStringToStringList(@Nullable String listString) {
         final List<String> ret = new ArrayList<String>();
@@ -125,7 +140,6 @@ final class TtlAgentHelper {
 
         return ret;
     }
-
 
     private TtlAgentHelper() {
         throw new InstantiationError("Must not instantiate this class");

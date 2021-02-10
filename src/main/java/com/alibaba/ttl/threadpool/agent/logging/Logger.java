@@ -1,3 +1,18 @@
+/*
+ * Copyright 2013 The TransmittableThreadLocal(TTL) Project
+ *
+ * The TTL Project licenses this file to you under the Apache License,
+ * version 2.0 (the "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
 package com.alibaba.ttl.threadpool.agent.logging;
 
 import java.text.SimpleDateFormat;
@@ -20,7 +35,8 @@ public abstract class Logger {
 
     public static void setLoggerImplType(String type) {
         if (loggerImplType != -1) {
-            throw new IllegalStateException("TTL logger implementation type is already set! type = " + loggerImplType);
+            throw new IllegalStateException(
+                    "TTL logger implementation type is already set! type = " + loggerImplType);
         }
 
         if (STDERR.equalsIgnoreCase(type)) loggerImplType = 0;
@@ -29,7 +45,8 @@ public abstract class Logger {
     }
 
     public static Logger getLogger(Class<?> clazz) {
-        if (loggerImplType == -1) throw new IllegalStateException("TTL logger implementation type is NOT set!");
+        if (loggerImplType == -1)
+            throw new IllegalStateException("TTL logger implementation type is NOT set!");
 
         switch (loggerImplType) {
             case 1:
@@ -75,8 +92,15 @@ public abstract class Logger {
         @Override
         public void log(Level level, String msg, Throwable thrown) {
             if (level == Level.SEVERE) {
-                final String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date());
-                System.err.printf("%s %s [%s] %s: %s%n", time, level, Thread.currentThread().getName(), logClass.getSimpleName(), msg);
+                final String time =
+                        new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date());
+                System.err.printf(
+                        "%s %s [%s] %s: %s%n",
+                        time,
+                        level,
+                        Thread.currentThread().getName(),
+                        logClass.getSimpleName(),
+                        msg);
                 if (thrown != null) thrown.printStackTrace();
             }
         }
@@ -90,7 +114,9 @@ public abstract class Logger {
         @Override
         public void log(Level level, String msg, Throwable thrown) {
             final String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date());
-            System.out.printf("%s %s [%s] %s: %s%n", time, level, Thread.currentThread().getName(), logClass.getSimpleName(), msg);
+            System.out.printf(
+                    "%s %s [%s] %s: %s%n",
+                    time, level, Thread.currentThread().getName(), logClass.getSimpleName(), msg);
             if (thrown != null) thrown.printStackTrace(System.out);
         }
     }

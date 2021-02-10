@@ -1,18 +1,32 @@
+/*
+ * Copyright 2013 The TransmittableThreadLocal(TTL) Project
+ *
+ * The TTL Project licenses this file to you under the Apache License,
+ * version 2.0 (the "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
 package com.alibaba.ttl.threadpool.agent.transformlet.helper;
+
+import static com.alibaba.ttl.TransmittableThreadLocal.Transmitter.capture;
 
 import com.alibaba.ttl.spi.TtlEnhanced;
 import com.alibaba.ttl.threadpool.agent.logging.Logger;
 import com.alibaba.ttl.threadpool.agent.transformlet.TtlTransformlet;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import javassist.*;
-
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
-
-import static com.alibaba.ttl.TransmittableThreadLocal.Transmitter.capture;
+import javassist.*;
 
 /**
  * Helper methods for {@link TtlTransformlet} implementation.
@@ -26,14 +40,15 @@ public final class TtlTransformletHelper {
     // ======== Javassist/Class Helper ========
 
     /**
-     * Output string like {@code public ScheduledFuture scheduleAtFixedRate(Runnable, long, long, TimeUnit)}
-     * for {@link  java.util.concurrent.ScheduledThreadPoolExecutor#scheduleAtFixedRate}.
+     * Output string like {@code public ScheduledFuture scheduleAtFixedRate(Runnable, long, long,
+     * TimeUnit)} for {@link java.util.concurrent.ScheduledThreadPoolExecutor#scheduleAtFixedRate}.
      *
      * @param method method object
      * @return method signature string
      */
     @NonNull
-    public static String signatureOfMethod(@NonNull final CtBehavior method) throws NotFoundException {
+    public static String signatureOfMethod(@NonNull final CtBehavior method)
+            throws NotFoundException {
         final StringBuilder stringBuilder = new StringBuilder();
 
         stringBuilder.append(Modifier.toString(method.getModifiers()));
@@ -61,7 +76,11 @@ public final class TtlTransformletHelper {
 
             return clazz.getURL();
         } catch (Exception e) {
-            logger.warn("Fail to getLocationUrlOfClass " + clazz.getName() + ", cause: " + e.toString());
+            logger.warn(
+                    "Fail to getLocationUrlOfClass "
+                            + clazz.getName()
+                            + ", cause: "
+                            + e.toString());
             return null;
         }
     }
@@ -86,7 +105,11 @@ public final class TtlTransformletHelper {
 
             return codeSource.getLocation();
         } catch (Exception e) {
-            logger.warn("Fail to getLocationUrlOfClass " + clazz.getName() + ", cause: " + e.toString());
+            logger.warn(
+                    "Fail to getLocationUrlOfClass "
+                            + clazz.getName()
+                            + ", cause: "
+                            + e.toString());
             return null;
         }
     }
@@ -105,8 +128,11 @@ public final class TtlTransformletHelper {
         return "original$" + method.getName() + "$method$renamed$by$ttl";
     }
 
-    public static String addTryFinallyToMethod(@NonNull CtMethod method, @NonNull String beforeCode, @NonNull String finallyCode) throws CannotCompileException, NotFoundException {
-        return addTryFinallyToMethod(method, renamedMethodNameByTtl(method), beforeCode, finallyCode);
+    public static String addTryFinallyToMethod(
+            @NonNull CtMethod method, @NonNull String beforeCode, @NonNull String finallyCode)
+            throws CannotCompileException, NotFoundException {
+        return addTryFinallyToMethod(
+                method, renamedMethodNameByTtl(method), beforeCode, finallyCode);
     }
 
     /**
@@ -114,16 +140,23 @@ public final class TtlTransformletHelper {
      *
      * @return the body code of method rewritten
      */
-    public static String addTryFinallyToMethod(@NonNull CtMethod method, @NonNull String nameForOriginalMethod, @NonNull String beforeCode, @NonNull String finallyCode) throws CannotCompileException, NotFoundException {
+    public static String addTryFinallyToMethod(
+            @NonNull CtMethod method,
+            @NonNull String nameForOriginalMethod,
+            @NonNull String beforeCode,
+            @NonNull String finallyCode)
+            throws CannotCompileException, NotFoundException {
         final CtClass clazz = method.getDeclaringClass();
 
         final CtMethod newMethod = CtNewMethod.copy(method, clazz, null);
-        // rename original method, and set to private method(avoid reflect out renamed method unexpectedly)
+        // rename original method, and set to private method(avoid reflect out renamed method
+        // unexpectedly)
         newMethod.setName(nameForOriginalMethod);
-        newMethod.setModifiers(newMethod.getModifiers()
-            & ~Modifier.PUBLIC /* remove public */
-            & ~Modifier.PROTECTED /* remove protected */
-            | Modifier.PRIVATE /* add private */);
+        newMethod.setModifiers(
+                newMethod.getModifiers()
+                                & ~Modifier.PUBLIC /* remove public */
+                                & ~Modifier.PROTECTED /* remove protected */
+                        | Modifier.PRIVATE /* add private */);
         clazz.addMethod(newMethod);
 
         final String returnOp;
@@ -133,13 +166,20 @@ public final class TtlTransformletHelper {
             returnOp = "return ";
         }
         // set new method implementation
-        final String code = "{\n" +
-            beforeCode + "\n" +
-            "try {\n" +
-            "    " + returnOp + nameForOriginalMethod + "($$);\n" +
-            "} finally {\n" +
-            "    " + finallyCode + "\n" +
-            "} }";
+        final String code =
+                "{\n"
+                        + beforeCode
+                        + "\n"
+                        + "try {\n"
+                        + "    "
+                        + returnOp
+                        + nameForOriginalMethod
+                        + "($$);\n"
+                        + "} finally {\n"
+                        + "    "
+                        + finallyCode
+                        + "\n"
+                        + "} }";
         method.setBody(code);
 
         return code;

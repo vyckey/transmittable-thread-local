@@ -1,21 +1,38 @@
+/*
+ * Copyright 2013 The TransmittableThreadLocal(TTL) Project
+ *
+ * The TTL Project licenses this file to you under the Apache License,
+ * version 2.0 (the "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
 package com.alibaba.ttl;
+
+import static com.alibaba.ttl.TransmittableThreadLocal.Transmitter.*;
 
 import com.alibaba.ttl.spi.TtlEnhanced;
 import com.alibaba.ttl.spi.TtlWrapper;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-
 import java.util.function.*;
-
-import static com.alibaba.ttl.TransmittableThreadLocal.Transmitter.*;
 
 /**
  * Util methods for TTL Wrapper: wrap common {@code Functional Interface}.
- * <p>
- * <b><i>Note:</i></b>
+ *
+ * <p><b><i>Note:</i></b>
+ *
  * <ul>
- * <li>all methods is {@code null}-safe, when input parameter is {@code null}, return {@code null}.</li>
- * <li>all wrap method skip wrap (aka. just return input parameter), when input parameter is already wrapped.</li>
+ *   <li>all methods is {@code null}-safe, when input parameter is {@code null}, return {@code
+ *       null}.
+ *   <li>all wrap method skip wrap (aka. just return input parameter), when input parameter is
+ *       already wrapped.
  * </ul>
  *
  * @author Jerry Lee (oldratlee at gmail dot com)
@@ -41,7 +58,8 @@ public class TtlWrappers {
         else return new TtlSupplier<T>(supplier);
     }
 
-    private static class TtlSupplier<T> implements Supplier<T>, TtlWrapper<Supplier<T>>, TtlEnhanced {
+    private static class TtlSupplier<T>
+            implements Supplier<T>, TtlWrapper<Supplier<T>>, TtlEnhanced {
         final Supplier<T> supplier;
         final Object captured;
 
@@ -87,7 +105,6 @@ public class TtlWrappers {
         }
     }
 
-
     /**
      * wrap input {@link Consumer} to TTL wrapper.
      *
@@ -103,7 +120,8 @@ public class TtlWrappers {
         else return new TtlConsumer<T>(consumer);
     }
 
-    private static class TtlConsumer<T> implements Consumer<T>, TtlWrapper<Consumer<T>>, TtlEnhanced {
+    private static class TtlConsumer<T>
+            implements Consumer<T>, TtlWrapper<Consumer<T>>, TtlEnhanced {
         final Consumer<T> consumer;
         final Object captured;
 
@@ -149,7 +167,6 @@ public class TtlWrappers {
         }
     }
 
-
     /**
      * wrap input {@link BiConsumer} to TTL wrapper.
      *
@@ -165,7 +182,8 @@ public class TtlWrappers {
         else return new TtlBiConsumer<T, U>(consumer);
     }
 
-    private static class TtlBiConsumer<T, U> implements BiConsumer<T, U>, TtlWrapper<BiConsumer<T, U>>, TtlEnhanced {
+    private static class TtlBiConsumer<T, U>
+            implements BiConsumer<T, U>, TtlWrapper<BiConsumer<T, U>>, TtlEnhanced {
         final BiConsumer<T, U> consumer;
         final Object captured;
 
@@ -211,7 +229,6 @@ public class TtlWrappers {
         }
     }
 
-
     /**
      * wrap input {@link Function} to TTL wrapper.
      *
@@ -227,7 +244,8 @@ public class TtlWrappers {
         else return new TtlFunction<T, R>(fn);
     }
 
-    private static class TtlFunction<T, R> implements Function<T, R>, TtlWrapper<Function<T, R>>, TtlEnhanced {
+    private static class TtlFunction<T, R>
+            implements Function<T, R>, TtlWrapper<Function<T, R>>, TtlEnhanced {
         final Function<T, R> fn;
         final Object captured;
 
@@ -273,7 +291,6 @@ public class TtlWrappers {
         }
     }
 
-
     /**
      * wrap input {@link BiFunction} to TTL wrapper.
      *
@@ -289,7 +306,8 @@ public class TtlWrappers {
         else return new TtlBiFunction<T, U, R>(fn);
     }
 
-    private static class TtlBiFunction<T, U, R> implements BiFunction<T, U, R>, TtlWrapper<BiFunction<T, U, R>>, TtlEnhanced {
+    private static class TtlBiFunction<T, U, R>
+            implements BiFunction<T, U, R>, TtlWrapper<BiFunction<T, U, R>>, TtlEnhanced {
         final BiFunction<T, U, R> fn;
         final Object captured;
 
@@ -334,7 +352,6 @@ public class TtlWrappers {
             return this.getClass().getName() + " - " + fn.toString();
         }
     }
-
 
     private TtlWrappers() {
         throw new InstantiationError("Must not instantiate this class");

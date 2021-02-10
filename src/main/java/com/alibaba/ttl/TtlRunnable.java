@@ -1,4 +1,21 @@
+/*
+ * Copyright 2013 The TransmittableThreadLocal(TTL) Project
+ *
+ * The TTL Project licenses this file to you under the Apache License,
+ * version 2.0 (the "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
 package com.alibaba.ttl;
+
+import static com.alibaba.ttl.TransmittableThreadLocal.Transmitter.*;
 
 import com.alibaba.ttl.spi.TtlAttachments;
 import com.alibaba.ttl.spi.TtlAttachmentsDelegate;
@@ -6,22 +23,20 @@ import com.alibaba.ttl.spi.TtlEnhanced;
 import com.alibaba.ttl.spi.TtlWrapper;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.alibaba.ttl.TransmittableThreadLocal.Transmitter.*;
-
 /**
- * {@link TtlRunnable} decorate {@link Runnable}, so as to get {@link TransmittableThreadLocal}
- * and transmit it to the time of {@link Runnable} execution, needed when use {@link Runnable} to thread pool.
- * <p>
- * Use factory methods {@link #get} / {@link #gets} to create instance.
- * <p>
- * Other TTL Wrapper for common {@code Functional Interface} see {@link TtlWrappers}.
+ * {@link TtlRunnable} decorate {@link Runnable}, so as to get {@link TransmittableThreadLocal} and
+ * transmit it to the time of {@link Runnable} execution, needed when use {@link Runnable} to thread
+ * pool.
+ *
+ * <p>Use factory methods {@link #get} / {@link #gets} to create instance.
+ *
+ * <p>Other TTL Wrapper for common {@code Functional Interface} see {@link TtlWrappers}.
  *
  * @author Jerry Lee (oldratlee at gmail dot com)
  * @see com.alibaba.ttl.threadpool.TtlExecutors
@@ -33,7 +48,8 @@ import static com.alibaba.ttl.TransmittableThreadLocal.Transmitter.*;
  * @see java.util.concurrent.Executors
  * @since 0.9.0
  */
-public final class TtlRunnable implements Runnable, TtlWrapper<Runnable>, TtlEnhanced, TtlAttachments {
+public final class TtlRunnable
+        implements Runnable, TtlWrapper<Runnable>, TtlEnhanced, TtlAttachments {
     private final AtomicReference<Object> capturedRef;
     private final Runnable runnable;
     private final boolean releaseTtlValueReferenceAfterRun;
@@ -44,13 +60,12 @@ public final class TtlRunnable implements Runnable, TtlWrapper<Runnable>, TtlEnh
         this.releaseTtlValueReferenceAfterRun = releaseTtlValueReferenceAfterRun;
     }
 
-    /**
-     * wrap method {@link Runnable#run()}.
-     */
+    /** wrap method {@link Runnable#run()}. */
     @Override
     public void run() {
         final Object captured = capturedRef.get();
-        if (captured == null || releaseTtlValueReferenceAfterRun && !capturedRef.compareAndSet(captured, null)) {
+        if (captured == null
+                || releaseTtlValueReferenceAfterRun && !capturedRef.compareAndSet(captured, null)) {
             throw new IllegalStateException("TTL value reference is released after run!");
         }
 
@@ -62,9 +77,7 @@ public final class TtlRunnable implements Runnable, TtlWrapper<Runnable>, TtlEnh
         }
     }
 
-    /**
-     * return original/unwrapped {@link Runnable}.
-     */
+    /** return original/unwrapped {@link Runnable}. */
     @NonNull
     public Runnable getRunnable() {
         return unwrap();
@@ -117,29 +130,36 @@ public final class TtlRunnable implements Runnable, TtlWrapper<Runnable>, TtlEnh
     /**
      * Factory method, wrap input {@link Runnable} to {@link TtlRunnable}.
      *
-     * @param runnable                         input {@link Runnable}. if input is {@code null}, return {@code null}.
-     * @param releaseTtlValueReferenceAfterRun release TTL value reference after run, avoid memory leak even if {@link TtlRunnable} is referred.
+     * @param runnable input {@link Runnable}. if input is {@code null}, return {@code null}.
+     * @param releaseTtlValueReferenceAfterRun release TTL value reference after run, avoid memory
+     *     leak even if {@link TtlRunnable} is referred.
      * @return Wrapped {@link Runnable}
      * @throws IllegalStateException when input is {@link TtlRunnable} already.
      */
     @Nullable
-    public static TtlRunnable get(@Nullable Runnable runnable, boolean releaseTtlValueReferenceAfterRun) {
+    public static TtlRunnable get(
+            @Nullable Runnable runnable, boolean releaseTtlValueReferenceAfterRun) {
         return get(runnable, releaseTtlValueReferenceAfterRun, false);
     }
 
     /**
      * Factory method, wrap input {@link Runnable} to {@link TtlRunnable}.
      *
-     * @param runnable                         input {@link Runnable}. if input is {@code null}, return {@code null}.
-     * @param releaseTtlValueReferenceAfterRun release TTL value reference after run, avoid memory leak even if {@link TtlRunnable} is referred.
-     * @param idempotent                       is idempotent mode or not. if {@code true}, just return input {@link Runnable} when it's {@link TtlRunnable},
-     *                                         otherwise throw {@link IllegalStateException}.
-     *                                         <B><I>Caution</I></B>: {@code true} will cover up bugs! <b>DO NOT</b> set, only when you know why.
+     * @param runnable input {@link Runnable}. if input is {@code null}, return {@code null}.
+     * @param releaseTtlValueReferenceAfterRun release TTL value reference after run, avoid memory
+     *     leak even if {@link TtlRunnable} is referred.
+     * @param idempotent is idempotent mode or not. if {@code true}, just return input {@link
+     *     Runnable} when it's {@link TtlRunnable}, otherwise throw {@link IllegalStateException}.
+     *     <B><I>Caution</I></B>: {@code true} will cover up bugs! <b>DO NOT</b> set, only when you
+     *     know why.
      * @return Wrapped {@link Runnable}
      * @throws IllegalStateException when input is {@link TtlRunnable} already and not idempotent.
      */
     @Nullable
-    public static TtlRunnable get(@Nullable Runnable runnable, boolean releaseTtlValueReferenceAfterRun, boolean idempotent) {
+    public static TtlRunnable get(
+            @Nullable Runnable runnable,
+            boolean releaseTtlValueReferenceAfterRun,
+            boolean idempotent) {
         if (null == runnable) return null;
 
         if (runnable instanceof TtlEnhanced) {
@@ -165,29 +185,37 @@ public final class TtlRunnable implements Runnable, TtlWrapper<Runnable>, TtlEnh
     /**
      * wrap input {@link Runnable} Collection to {@link TtlRunnable} Collection.
      *
-     * @param tasks                            task to be wrapped. if input is {@code null}, return {@code null}.
-     * @param releaseTtlValueReferenceAfterRun release TTL value reference after run, avoid memory leak even if {@link TtlRunnable} is referred.
+     * @param tasks task to be wrapped. if input is {@code null}, return {@code null}.
+     * @param releaseTtlValueReferenceAfterRun release TTL value reference after run, avoid memory
+     *     leak even if {@link TtlRunnable} is referred.
      * @return wrapped tasks
      * @throws IllegalStateException when input is {@link TtlRunnable} already.
      */
     @NonNull
-    public static List<TtlRunnable> gets(@Nullable Collection<? extends Runnable> tasks, boolean releaseTtlValueReferenceAfterRun) {
+    public static List<TtlRunnable> gets(
+            @Nullable Collection<? extends Runnable> tasks,
+            boolean releaseTtlValueReferenceAfterRun) {
         return gets(tasks, releaseTtlValueReferenceAfterRun, false);
     }
 
     /**
      * wrap input {@link Runnable} Collection to {@link TtlRunnable} Collection.
      *
-     * @param tasks                            task to be wrapped. if input is {@code null}, return {@code null}.
-     * @param releaseTtlValueReferenceAfterRun release TTL value reference after run, avoid memory leak even if {@link TtlRunnable} is referred.
-     * @param idempotent                       is idempotent mode or not. if {@code true}, just return input {@link Runnable} when it's {@link TtlRunnable},
-     *                                         otherwise throw {@link IllegalStateException}.
-     *                                         <B><I>Caution</I></B>: {@code true} will cover up bugs! <b>DO NOT</b> set, only when you know why.
+     * @param tasks task to be wrapped. if input is {@code null}, return {@code null}.
+     * @param releaseTtlValueReferenceAfterRun release TTL value reference after run, avoid memory
+     *     leak even if {@link TtlRunnable} is referred.
+     * @param idempotent is idempotent mode or not. if {@code true}, just return input {@link
+     *     Runnable} when it's {@link TtlRunnable}, otherwise throw {@link IllegalStateException}.
+     *     <B><I>Caution</I></B>: {@code true} will cover up bugs! <b>DO NOT</b> set, only when you
+     *     know why.
      * @return wrapped tasks
      * @throws IllegalStateException when input is {@link TtlRunnable} already and not idempotent.
      */
     @NonNull
-    public static List<TtlRunnable> gets(@Nullable Collection<? extends Runnable> tasks, boolean releaseTtlValueReferenceAfterRun, boolean idempotent) {
+    public static List<TtlRunnable> gets(
+            @Nullable Collection<? extends Runnable> tasks,
+            boolean releaseTtlValueReferenceAfterRun,
+            boolean idempotent) {
         if (null == tasks) return Collections.emptyList();
 
         List<TtlRunnable> copy = new ArrayList<TtlRunnable>();
@@ -199,11 +227,13 @@ public final class TtlRunnable implements Runnable, TtlWrapper<Runnable>, TtlEnh
 
     /**
      * Unwrap {@link TtlRunnable} to the original/underneath one.
-     * <p>
-     * this method is {@code null}-safe, when input {@code Runnable} parameter is {@code null}, return {@code null};
-     * if input {@code Runnable} parameter is not a {@link TtlRunnable} just return input {@code Runnable}.
-     * <p>
-     * so {@code TtlRunnable.unwrap(TtlRunnable.get(runnable))} will always return the same input {@code runnable} object.
+     *
+     * <p>this method is {@code null}-safe, when input {@code Runnable} parameter is {@code null},
+     * return {@code null}; if input {@code Runnable} parameter is not a {@link TtlRunnable} just
+     * return input {@code Runnable}.
+     *
+     * <p>so {@code TtlRunnable.unwrap(TtlRunnable.get(runnable))} will always return the same input
+     * {@code runnable} object.
      *
      * @see #get(Runnable)
      * @see com.alibaba.ttl.TtlUnwrap#unwrap(Object)
@@ -217,10 +247,11 @@ public final class TtlRunnable implements Runnable, TtlWrapper<Runnable>, TtlEnh
 
     /**
      * Unwrap {@link TtlRunnable} to the original/underneath one for collection.
-     * <p>
-     * Invoke {@link #unwrap(Runnable)} for each element in input collection.
-     * <p>
-     * This method is {@code null}-safe, when input {@code Runnable} parameter collection is {@code null}, return a empty list.
+     *
+     * <p>Invoke {@link #unwrap(Runnable)} for each element in input collection.
+     *
+     * <p>This method is {@code null}-safe, when input {@code Runnable} parameter collection is
+     * {@code null}, return a empty list.
      *
      * @see #gets(Collection)
      * @see #unwrap(Runnable)

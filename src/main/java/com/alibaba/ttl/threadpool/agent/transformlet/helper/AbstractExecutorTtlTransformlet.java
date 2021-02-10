@@ -1,4 +1,21 @@
+/*
+ * Copyright 2013 The TransmittableThreadLocal(TTL) Project
+ *
+ * The TTL Project licenses this file to you under the Apache License,
+ * version 2.0 (the "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
 package com.alibaba.ttl.threadpool.agent.transformlet.helper;
+
+import static com.alibaba.ttl.threadpool.agent.transformlet.helper.TtlTransformletHelper.signatureOfMethod;
 
 import com.alibaba.ttl.threadpool.TtlExecutors;
 import com.alibaba.ttl.threadpool.agent.logging.Logger;
@@ -6,8 +23,6 @@ import com.alibaba.ttl.threadpool.agent.transformlet.ClassInfo;
 import com.alibaba.ttl.threadpool.agent.transformlet.TtlTransformlet;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import javassist.*;
-
 import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.util.Collections;
@@ -15,8 +30,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
-
-import static com.alibaba.ttl.threadpool.agent.transformlet.helper.TtlTransformletHelper.signatureOfMethod;
+import javassist.*;
 
 /**
  * Abstract {@link TtlTransformlet} for {@link java.util.concurrent.Executor} and its subclass.
@@ -38,19 +52,20 @@ public abstract class AbstractExecutorTtlTransformlet implements TtlTransformlet
     protected static final String TTL_CALLABLE_CLASS_NAME = "com.alibaba.ttl.TtlCallable";
 
     protected static final String THREAD_FACTORY_CLASS_NAME = "java.util.concurrent.ThreadFactory";
-    protected static final String THREAD_POOL_EXECUTOR_CLASS_NAME = "java.util.concurrent.ThreadPoolExecutor";
+    protected static final String THREAD_POOL_EXECUTOR_CLASS_NAME =
+            "java.util.concurrent.ThreadPoolExecutor";
 
     protected final Logger logger = Logger.getLogger(getClass());
 
     protected final Set<String> executorClassNames;
     protected final boolean disableInheritableForThreadPool;
 
-    private final Map<String, String> paramTypeNameToDecorateMethodClass = new HashMap<String, String>();
+    private final Map<String, String> paramTypeNameToDecorateMethodClass =
+            new HashMap<String, String>();
 
-    /**
-     * @param executorClassNames the executor class names to be transformed
-     */
-    public AbstractExecutorTtlTransformlet(Set<String> executorClassNames, boolean disableInheritableForThreadPool) {
+    /** @param executorClassNames the executor class names to be transformed */
+    public AbstractExecutorTtlTransformlet(
+            Set<String> executorClassNames, boolean disableInheritableForThreadPool) {
         this.executorClassNames = Collections.unmodifiableSet(executorClassNames);
         this.disableInheritableForThreadPool = disableInheritableForThreadPool;
 
@@ -59,21 +74,27 @@ public abstract class AbstractExecutorTtlTransformlet implements TtlTransformlet
     }
 
     @Override
-    public final void doTransform(@NonNull final ClassInfo classInfo) throws IOException, NotFoundException, CannotCompileException {
+    public final void doTransform(@NonNull final ClassInfo classInfo)
+            throws IOException, NotFoundException, CannotCompileException {
         final CtClass clazz = classInfo.getCtClass();
         if (executorClassNames.contains(classInfo.getClassName())) {
             for (CtMethod method : clazz.getDeclaredMethods()) {
-                updateSubmitMethodsOfExecutorClass_decorateToTtlWrapperAndSetAutoWrapperAttachment(method);
+                updateSubmitMethodsOfExecutorClass_decorateToTtlWrapperAndSetAutoWrapperAttachment(
+                        method);
             }
 
             if (disableInheritableForThreadPool) updateConstructorDisableInheritable(clazz);
 
             classInfo.setModified();
         } else {
-            if (clazz.isPrimitive() || clazz.isArray() || clazz.isInterface() || clazz.isAnnotation()) {
+            if (clazz.isPrimitive()
+                    || clazz.isArray()
+                    || clazz.isInterface()
+                    || clazz.isAnnotation()) {
                 return;
             }
-            if (!clazz.subclassOf(clazz.getClassPool().get(THREAD_POOL_EXECUTOR_CLASS_NAME))) return;
+            if (!clazz.subclassOf(clazz.getClassPool().get(THREAD_POOL_EXECUTOR_CLASS_NAME)))
+                return;
 
             logger.info("Transforming class " + classInfo.getClassName());
 
@@ -87,8 +108,10 @@ public abstract class AbstractExecutorTtlTransformlet implements TtlTransformlet
      * @see com.alibaba.ttl.TtlCallable#get(Callable, boolean, boolean)
      * @see com.alibaba.ttl.spi.TtlAttachmentsDelegate#setAutoWrapperAttachment(Object)
      */
-    @SuppressFBWarnings("VA_FORMAT_STRING_USES_NEWLINE") // [ERROR] Format string should use %n rather than \n
-    private void updateSubmitMethodsOfExecutorClass_decorateToTtlWrapperAndSetAutoWrapperAttachment(@NonNull final CtMethod method) throws NotFoundException, CannotCompileException {
+    @SuppressFBWarnings(
+            "VA_FORMAT_STRING_USES_NEWLINE") // [ERROR] Format string should use %n rather than \n
+    private void updateSubmitMethodsOfExecutorClass_decorateToTtlWrapperAndSetAutoWrapperAttachment(
+            @NonNull final CtMethod method) throws NotFoundException, CannotCompileException {
         final int modifiers = method.getModifiers();
         if (!Modifier.isPublic(modifiers) || Modifier.isStatic(modifiers)) return;
 
@@ -97,31 +120,46 @@ public abstract class AbstractExecutorTtlTransformlet implements TtlTransformlet
         for (int i = 0; i < parameterTypes.length; i++) {
             final String paramTypeName = parameterTypes[i].getName();
             if (paramTypeNameToDecorateMethodClass.containsKey(paramTypeName)) {
-                String code = String.format(
-                    // decorate to TTL wrapper,
-                    // and then set AutoWrapper attachment/Tag
-                    "    $%d = %s.get($%1$d, false, true);"
-                        + "\n    com.alibaba.ttl.spi.TtlAttachmentsDelegate.setAutoWrapperAttachment($%1$d);",
-                    i + 1, paramTypeNameToDecorateMethodClass.get(paramTypeName));
-                logger.info("insert code before method " + signatureOfMethod(method) + " of class " + method.getDeclaringClass().getName() + ":\n" + code);
+                String code =
+                        String.format(
+                                // decorate to TTL wrapper,
+                                // and then set AutoWrapper attachment/Tag
+                                "    $%d = %s.get($%1$d, false, true);"
+                                        + "\n    com.alibaba.ttl.spi.TtlAttachmentsDelegate.setAutoWrapperAttachment($%1$d);",
+                                i + 1, paramTypeNameToDecorateMethodClass.get(paramTypeName));
+                logger.info(
+                        "insert code before method "
+                                + signatureOfMethod(method)
+                                + " of class "
+                                + method.getDeclaringClass().getName()
+                                + ":\n"
+                                + code);
                 insertCode.append(code);
             }
         }
         if (insertCode.length() > 0) method.insertBefore(insertCode.toString());
     }
 
-    /**
-     * @see TtlExecutors#getDisableInheritableThreadFactory(java.util.concurrent.ThreadFactory)
-     */
-    private void updateConstructorDisableInheritable(@NonNull final CtClass clazz) throws NotFoundException, CannotCompileException {
+    /** @see TtlExecutors#getDisableInheritableThreadFactory(java.util.concurrent.ThreadFactory) */
+    private void updateConstructorDisableInheritable(@NonNull final CtClass clazz)
+            throws NotFoundException, CannotCompileException {
         for (CtConstructor constructor : clazz.getDeclaredConstructors()) {
             final CtClass[] parameterTypes = constructor.getParameterTypes();
             final StringBuilder insertCode = new StringBuilder();
             for (int i = 0; i < parameterTypes.length; i++) {
                 final String paramTypeName = parameterTypes[i].getName();
                 if (THREAD_FACTORY_CLASS_NAME.equals(paramTypeName)) {
-                    String code = String.format("$%d = com.alibaba.ttl.threadpool.TtlExecutors.getDisableInheritableThreadFactory($%<d);", i + 1);
-                    logger.info("insert code before method " + signatureOfMethod(constructor) + " of class " + constructor.getDeclaringClass().getName() + ": " + code);
+                    String code =
+                            String.format(
+                                    "$%d = com.alibaba.ttl.threadpool.TtlExecutors.getDisableInheritableThreadFactory($%<d);",
+                                    i + 1);
+                    logger.info(
+                            "insert code before method "
+                                    + signatureOfMethod(constructor)
+                                    + " of class "
+                                    + constructor.getDeclaringClass().getName()
+                                    + ": "
+                                    + code);
                     insertCode.append(code);
                 }
             }
@@ -129,20 +167,28 @@ public abstract class AbstractExecutorTtlTransformlet implements TtlTransformlet
         }
     }
 
-    /**
-     * @see com.alibaba.ttl.spi.TtlAttachmentsDelegate#unwrapIfIsAutoWrapper(Object)
-     */
-    private boolean updateBeforeAndAfterExecuteMethodOfExecutorSubclass(@NonNull final CtClass clazz) throws NotFoundException, CannotCompileException {
+    /** @see com.alibaba.ttl.spi.TtlAttachmentsDelegate#unwrapIfIsAutoWrapper(Object) */
+    private boolean updateBeforeAndAfterExecuteMethodOfExecutorSubclass(
+            @NonNull final CtClass clazz) throws NotFoundException, CannotCompileException {
         final CtClass runnableClass = clazz.getClassPool().get(RUNNABLE_CLASS_NAME);
         final CtClass threadClass = clazz.getClassPool().get("java.lang.Thread");
         final CtClass throwableClass = clazz.getClassPool().get("java.lang.Throwable");
         boolean modified = false;
 
         try {
-            final CtMethod beforeExecute = clazz.getDeclaredMethod("beforeExecute", new CtClass[]{threadClass, runnableClass});
+            final CtMethod beforeExecute =
+                    clazz.getDeclaredMethod(
+                            "beforeExecute", new CtClass[] {threadClass, runnableClass});
             // unwrap runnable if IsAutoWrapper
-            String code = "$2 = com.alibaba.ttl.spi.TtlAttachmentsDelegate.unwrapIfIsAutoWrapper($2);";
-            logger.info("insert code before method " + signatureOfMethod(beforeExecute) + " of class " + beforeExecute.getDeclaringClass().getName() + ": " + code);
+            String code =
+                    "$2 = com.alibaba.ttl.spi.TtlAttachmentsDelegate.unwrapIfIsAutoWrapper($2);";
+            logger.info(
+                    "insert code before method "
+                            + signatureOfMethod(beforeExecute)
+                            + " of class "
+                            + beforeExecute.getDeclaringClass().getName()
+                            + ": "
+                            + code);
             beforeExecute.insertBefore(code);
             modified = true;
         } catch (NotFoundException e) {
@@ -150,10 +196,19 @@ public abstract class AbstractExecutorTtlTransformlet implements TtlTransformlet
         }
 
         try {
-            final CtMethod afterExecute = clazz.getDeclaredMethod("afterExecute", new CtClass[]{runnableClass, throwableClass});
+            final CtMethod afterExecute =
+                    clazz.getDeclaredMethod(
+                            "afterExecute", new CtClass[] {runnableClass, throwableClass});
             // unwrap runnable if IsAutoWrapper
-            String code = "$1 = com.alibaba.ttl.spi.TtlAttachmentsDelegate.unwrapIfIsAutoWrapper($1);";
-            logger.info("insert code before method " + signatureOfMethod(afterExecute) + " of class " + afterExecute.getDeclaringClass().getName() + ": " + code);
+            String code =
+                    "$1 = com.alibaba.ttl.spi.TtlAttachmentsDelegate.unwrapIfIsAutoWrapper($1);";
+            logger.info(
+                    "insert code before method "
+                            + signatureOfMethod(afterExecute)
+                            + " of class "
+                            + afterExecute.getDeclaringClass().getName()
+                            + ": "
+                            + code);
             afterExecute.insertBefore(code);
             modified = true;
         } catch (NotFoundException e) {
