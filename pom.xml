@@ -448,9 +448,11 @@
 							<formats>
 								<format>
 									<includes>
-										<include>*.java</include>
-										<include>*.kt</include>
-										<include>*.xml</include>
+										<include>src/main/java/**/*.java</include>
+										<include>src/test/java/**/*.java</include>
+										<include>src/main/java/**/*.kt</include>
+										<include>src/test/java/**/*.kt</include>
+										<include>pom*.xml</include>
 									</includes>
 
 									<trimTrailingWhitespace/>
@@ -459,8 +461,9 @@
 							</formats>
 							<java>
 								<removeUnusedImports/>
+								<importOrder />
 								<googleJavaFormat>
-									<version>1.9</version>
+									<version>1.11.0</version>
 									<style>AOSP</style>
 								</googleJavaFormat>
 								<licenseHeader>
