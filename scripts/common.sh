@@ -30,7 +30,7 @@ __error_trap_handler_() {
   local file_line_info="$1"
   local code="$2"
   local commands="$3"
-  echo "Trap error! Exit status: $code${nl}File/(near) line info:$nl  $file_line_info${nl}Error code line:$nl  $commands"
+    echo "Trap error! Exit status: $code${nl}File/(near) line info:$nl  $file_line_info${nl}Error code line:$nl  $commands" >&2
 }
 trap '__error_trap_handler_ "${BASH_SOURCE[*]} / $LINENO ${BASH_LINENO[*]}" "$?" "$BASH_COMMAND"' ERR
 
@@ -67,6 +67,17 @@ headInfo() {
 
 # How to compare a program's version in a shell script?
 #   https://unix.stackexchange.com/questions/285924
+versionGreatThanEq() {
+    (($# == 2)) || die "${FUNCNAME[0]} need only 2 arguments, actual arguments: $*"
+
+    local ver=$1
+    local destVer=$2
+
+    [ "$ver" = "$destVer" ] && return 0
+
+    [ "$(printf '%s\n' "$ver" "$destVer" | sort -V | head -n1)" = "$destVer" ]
+}
+
 versionLessThan() {
     (($# == 2)) || die "${FUNCNAME[0]} need only 2 arguments, actual arguments: $*"
 
@@ -97,7 +108,7 @@ logAndRun() {
         echo "Run under work directory $PWD : $*"
         "$@"
     else
-        blueEcho "Run under work directory $PWD :$nl$*"
+        blueEcho "Run under work directory $PWD :$nl$*" 1>&2
         time "$@"
     fi
 }
@@ -105,4 +116,19 @@ logAndRun() {
 die() {
     redEcho "Error: $*" 1>&2
     exit 1
+}
+
+# How to determine function name from inside a function
+#   https://stackoverflow.com/questions/1835943
+# Bash Shell: Check If A Function Exists Or Not (Find Out If a Function Is Defined Or Not)
+#   https://www.cyberciti.biz/faq/bash-shell-scripting-find-out-if-function-definedornot/
+checkNecessityForCallerFunction() {
+    if ((${#FUNCNAME[@]} < 3)); then
+        return 0
+    fi
+
+    local checkNecessityFunctionName="${FUNCNAME[1]}_Necessity"
+    if declare -F "$checkNecessityFunctionName" &>/dev/null; then
+        "$checkNecessityFunctionName"
+    fi
 }

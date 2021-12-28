@@ -16,13 +16,13 @@ __loadSdkman() {
         [ -d "$HOME/.sdkman" ] && rm -rf "$HOME/.sdkman"
 
         curl -s get.sdkman.io | bash || die "fail to install sdkman"
+        this_time_install_sdk_man=true
+
         {
             echo sdkman_auto_answer=true
             echo sdkman_auto_selfupdate=false
             echo sdkman_disable_auto_upgrade_check=true
         } >>"$HOME/.sdkman/etc/config"
-
-        this_time_install_sdk_man=true
     fi
 
     logAndRun cat "$HOME/.sdkman/etc/config"
@@ -48,7 +48,6 @@ java_home_var_names=()
 
 __setJdkHomeVarsAndInstallJdk() {
     blueEcho "prepared jdks:"
-    JDK6_HOME="${JDK6_HOME:-/usr/lib/jvm/java-6-openjdk-amd64}"
 
     local jdkNameOfSdkman
     for jdkNameOfSdkman in "${jdks_install_by_sdkman[@]}"; do
@@ -66,9 +65,7 @@ __setJdkHomeVarsAndInstallJdk() {
 
             # install jdk by sdkman
             [ ! -d "$jdkHomePath" ] && {
-                set +u
                 loose logAndRun sdk install java "$jdkNameOfSdkman" || die "fail to install jdk $jdkNameOfSdkman by sdkman"
-                set -u
             }
         fi
 

@@ -1,15 +1,4 @@
 #!/bin/bash
-# NOTE about Bash Traps and Pitfalls:
-#
-# 1. DO NOT declare var as readonly/local if value is supplied by subshell!!
-#    for example:
-#       readonly var1=$(echo value1)
-#       local var1=$(echo value1)
-#
-#    readonly declaration make exit code of assignment to be always 0,
-#      aka. the exit code of command in subshell is discarded.
-#      tested on bash 3.2.57/4.2.46
-
 [ -z "${__source_guard_E2EB46EC_DEB8_4818_8D4E_F425BDF4A275:+dummy}" ] || return 0
 __source_guard_E2EB46EC_DEB8_4818_8D4E_F425BDF4A275="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
@@ -18,7 +7,7 @@ source "$__source_guard_E2EB46EC_DEB8_4818_8D4E_F425BDF4A275/common.sh"
 
 
 ################################################################################
-# build util functions
+# java operation functions
 ################################################################################
 
 __getMvnwExe() {
